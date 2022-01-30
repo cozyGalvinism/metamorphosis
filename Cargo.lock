@@ -946,22 +946,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "metamorphosis"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "custom_error",
- "http-cache-reqwest",
- "lazy_static",
- "log",
- "reqwest",
- "reqwest-middleware",
- "serde",
- "serde_json",
- "tokio",
-]
-
-[[package]]
 name = "miette"
 version = "3.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1019,6 +1003,34 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b9f1c5b025cda876f66ef43a113f91ebc9f4ccef34843000e0adf6ebbab84e21"
 dependencies = [
  "winapi",
+]
+
+[[package]]
+name = "morphosis-meta"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "custom_error",
+ "http-cache-reqwest",
+ "lazy_static",
+ "log",
+ "reqwest",
+ "reqwest-middleware",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "morphosis-poly"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "log",
+ "serde",
+ "serde_json",
+ "simple_logger",
+ "tokio",
 ]
 
 [[package]]
@@ -1212,18 +1224,6 @@ dependencies = [
  "log",
  "wepoll-ffi",
  "winapi",
-]
-
-[[package]]
-name = "polymorphosis"
-version = "0.1.0"
-dependencies = [
- "clap",
- "log",
- "serde",
- "serde_json",
- "simple_logger",
- "tokio",
 ]
 
 [[package]]
