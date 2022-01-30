@@ -1,7 +1,7 @@
 use std::{cell::RefCell, collections::HashMap, fmt::Display, ops::DerefMut, str::FromStr};
 
-use chrono::{DateTime, NaiveDateTime};
-use serde::{Deserialize, Deserializer, Serialize};
+use chrono::DateTime;
+use serde::{Deserialize, Serialize};
 
 lazy_static! {
     pub static ref MAX_MOJANG_SUPPORTED_VERSION: i32 = 21;
