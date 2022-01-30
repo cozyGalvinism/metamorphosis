@@ -34,8 +34,10 @@ impl MojangUpdater {
         std::fs::create_dir_all(upstream_path.as_ref().join("mojang/versions")).unwrap();
         std::fs::create_dir_all(upstream_path.as_ref().join("mojang/assets")).unwrap();
 
-
-        MojangUpdater { client, upstream_path: upstream_path.as_ref().to_path_buf() }
+        MojangUpdater {
+            client,
+            upstream_path: upstream_path.as_ref().to_path_buf(),
+        }
     }
 
     fn get_local_mojang_index(&self) -> MojangIndex {
@@ -44,7 +46,9 @@ impl MojangUpdater {
         // check if upstream/mojang/version_manifest_v2.json exists,
         // if it does, read it and parse it
         // if it doesn't, create a default MojangIndex
-        if let Ok(mut file) = std::fs::File::open(self.upstream_path.join("mojang/version_manifest_v2.json")) {
+        if let Ok(mut file) =
+            std::fs::File::open(self.upstream_path.join("mojang/version_manifest_v2.json"))
+        {
             info!("Found local Mojang index!");
             let mut contents = String::new();
             file.read_to_string(&mut contents).unwrap();
@@ -105,14 +109,20 @@ impl MojangUpdater {
             .filter(|id| !local_version_ids.contains(id))
             .cloned()
             .collect::<Vec<String>>();
-        info!("Found {} new versions, which aren't in the local index!", new_versions.len());
+        info!(
+            "Found {} new versions, which aren't in the local index!",
+            new_versions.len()
+        );
         // Create a list of versions that are in the local and remote Mojang index
         let common_versions = local_version_ids
             .iter()
             .filter(|id| remote_version_ids.contains(id))
             .cloned()
             .collect::<Vec<String>>();
-        info!("Found {} versions, which are in the local and remote index!", common_versions.len());
+        info!(
+            "Found {} versions, which are in the local and remote index!",
+            common_versions.len()
+        );
         info!("Checking if any of the common versions are outdated...");
         for id in common_versions {
             // check if the remote version time is newer than the local version time
@@ -133,7 +143,8 @@ impl MojangUpdater {
             info!("Downloading version file {}...", id);
             let (asset_id, asset_url) = self
                 .download_version_file(
-                    self.upstream_path.join(format!("mojang/versions/{}.json", id)),
+                    self.upstream_path
+                        .join(format!("mojang/versions/{}.json", id)),
                     &version.url,
                 )
                 .await?;
@@ -143,7 +154,8 @@ impl MojangUpdater {
         for (asset_id, asset_url) in asset_map {
             info!("Downloading asset file {}...", asset_id);
             self.download_asset_file(
-                self.upstream_path.join(format!("mojang/assets/{}.json", asset_id)),
+                self.upstream_path
+                    .join(format!("mojang/assets/{}.json", asset_id)),
                 &asset_url,
             )
             .await?;
@@ -151,7 +163,8 @@ impl MojangUpdater {
 
         info!("Saving new Mojang index...");
         // write the new Mojang index to disk
-        let mut file = std::fs::File::create(self.upstream_path.join("mojang/version_manifest_v2.json"))?;
+        let mut file =
+            std::fs::File::create(self.upstream_path.join("mojang/version_manifest_v2.json"))?;
         file.write_all(serde_json::to_string(&remote_index).unwrap().as_bytes())?;
         info!("Generation done!");
 
@@ -164,7 +177,10 @@ impl MojangUpdater {
         &self,
         path: P,
         url: &str,
-    ) -> std::io::Result<(String, String)> where P: AsRef<Path> {
+    ) -> std::io::Result<(String, String)>
+    where
+        P: AsRef<Path>,
+    {
         let response = self
             .client
             .get(url)
@@ -203,7 +219,10 @@ impl MojangUpdater {
         Ok((asset_id.to_string(), asset_url.to_string()))
     }
 
-    pub async fn download_asset_file<P>(&self, path: P, url: &str) -> std::io::Result<()> where P: AsRef<Path> {
+    pub async fn download_asset_file<P>(&self, path: P, url: &str) -> std::io::Result<()>
+    where
+        P: AsRef<Path>,
+    {
         let response = self
             .client
             .get(url)

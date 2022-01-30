@@ -5,7 +5,7 @@ pub mod mojang_version_validation {
     use crate::models::mojang::MAX_MOJANG_SUPPORTED_VERSION;
 
     /// Deserializes the Mojang format version.
-    /// 
+    ///
     /// If the version is not supported, an error is returned.
     pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<i32>, D::Error>
     where
@@ -26,7 +26,7 @@ pub mod mojang_version_validation {
     }
 
     /// Serializes the Mojang format version.
-    /// 
+    ///
     /// If the version is not supported, an error is returned.
     pub fn serialize<S>(version: &Option<i32>, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -54,7 +54,7 @@ pub mod polymc_version_validation {
     use crate::models::polymc::CURRENT_POLYMC_FORMAT_VERSION;
 
     /// Deserializes the PolyMC format version.
-    /// 
+    ///
     /// If the version is not supported, an error is returned.
     pub fn deserialize<'de, D>(deserializer: D) -> Result<u8, D::Error>
     where
@@ -72,7 +72,7 @@ pub mod polymc_version_validation {
     }
 
     /// Serializes the PolyMC format version.
-    /// 
+    ///
     /// If the version is not supported, an error is returned.
     pub fn serialize<S>(version: &u8, serializer: S) -> Result<S::Ok, S::Error>
     where
