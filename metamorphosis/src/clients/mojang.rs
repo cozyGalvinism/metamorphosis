@@ -13,11 +13,11 @@ use crate::models::mojang::MojangIndex;
 
 pub struct MojangUpdater {
     client: ClientWithMiddleware,
-    upstream_path: PathBuf,
+    cache_directory: PathBuf,
 }
 
 impl MojangUpdater {
-    pub fn new<P>(upstream_path: P) -> Self
+    pub fn new<P>(cache_directory: P) -> Self
     where
         P: AsRef<Path>,
     {
@@ -30,13 +30,13 @@ impl MojangUpdater {
                 options: None,
             }))
             .build();
-        // ensure the upstream path and some subdirectories exist
-        std::fs::create_dir_all(upstream_path.as_ref().join("mojang/versions")).unwrap();
-        std::fs::create_dir_all(upstream_path.as_ref().join("mojang/assets")).unwrap();
+        // ensure the cache path and some subdirectories exist
+        std::fs::create_dir_all(cache_directory.as_ref().join("mojang/versions")).unwrap();
+        std::fs::create_dir_all(cache_directory.as_ref().join("mojang/assets")).unwrap();
 
         MojangUpdater {
             client,
-            upstream_path: upstream_path.as_ref().to_path_buf(),
+            cache_directory: cache_directory.as_ref().to_path_buf(),
         }
     }
 
@@ -47,7 +47,7 @@ impl MojangUpdater {
         // if it does, read it and parse it
         // if it doesn't, create a default MojangIndex
         if let Ok(mut file) =
-            std::fs::File::open(self.upstream_path.join("mojang/version_manifest_v2.json"))
+            std::fs::File::open(self.cache_directory.join("mojang/version_manifest_v2.json"))
         {
             info!("Found local Mojang index!");
             let mut contents = String::new();
@@ -143,7 +143,7 @@ impl MojangUpdater {
             info!("Downloading version file {}...", id);
             let (asset_id, asset_url) = self
                 .download_version_file(
-                    self.upstream_path
+                    self.cache_directory
                         .join(format!("mojang/versions/{}.json", id)),
                     &version.url,
                 )
@@ -154,7 +154,7 @@ impl MojangUpdater {
         for (asset_id, asset_url) in asset_map {
             info!("Downloading asset file {}...", asset_id);
             self.download_asset_file(
-                self.upstream_path
+                self.cache_directory
                     .join(format!("mojang/assets/{}.json", asset_id)),
                 &asset_url,
             )
@@ -164,7 +164,7 @@ impl MojangUpdater {
         info!("Saving new Mojang index...");
         // write the new Mojang index to disk
         let mut file =
-            std::fs::File::create(self.upstream_path.join("mojang/version_manifest_v2.json"))?;
+            std::fs::File::create(self.cache_directory.join("mojang/version_manifest_v2.json"))?;
         file.write_all(serde_json::to_string(&remote_index).unwrap().as_bytes())?;
         info!("Generation done!");
 

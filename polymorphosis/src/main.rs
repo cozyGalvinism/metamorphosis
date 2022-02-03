@@ -1,3 +1,6 @@
-fn main() {
-    println!("Hello, world!");
+use morphosis_meta::clients::forge::ForgeUpdater;
+
+#[tokio::main]
+async fn main() {
+    simple_logger::SimpleLogger::new().with_colors(true).with_level(log::LevelFilter::Info).init().unwrap();
 }

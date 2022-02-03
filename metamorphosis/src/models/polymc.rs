@@ -3,9 +3,12 @@ use std::str::FromStr;
 use chrono::DateTime;
 use serde::{Deserialize, Serialize};
 
-use super::mojang::{
-    GradleSpecifier, MojangArtifact, MojangArtifactBase, MojangAssets, MojangError, MojangLibrary,
-    MojangLibraryDownloads, MojangVersionFile,
+use super::{
+    misc::GradleSpecifier,
+    mojang::{
+        MojangArtifact, MojangArtifactBase, MojangAssets, MojangError, MojangLibrary,
+        MojangLibraryDownloads, MojangVersionFile,
+    },
 };
 
 lazy_static! {
