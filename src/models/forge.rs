@@ -265,7 +265,9 @@ impl From<ForgeEntry> for ForgeVersion {
                     continue;
                 }
 
-                if (classifier == "universal" || classifier == "client") && (extension == "jar" || extension == "zip") {
+                if (classifier == "universal" || classifier == "client")
+                    && (extension == "jar" || extension == "zip")
+                {
                     universal_file_name = Some(file_name);
                     universal_url = Some(url);
                     continue;
@@ -336,7 +338,7 @@ impl ForgeVersion {
         if version_elements.is_empty() {
             return false;
         }
-        
+
         let major_version = version_elements[0];
         if major_version.parse::<i32>().is_err() {
             return false;

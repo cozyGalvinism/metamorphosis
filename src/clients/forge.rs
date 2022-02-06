@@ -1,13 +1,20 @@
 use std::{
     collections::HashMap,
-    path::{Path, PathBuf}, io::{Write, Read},
+    io::{Read, Write},
+    path::{Path, PathBuf},
 };
 
 use http_cache_reqwest::{CACacheManager, Cache, HttpCache};
 use reqwest::Client;
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 
-use crate::models::{forge::{DerivedForgeIndex, ForgeEntry, ForgeFile, ForgeMCVersionInfo, ForgeVersion, ForgeInstallerProfile, ForgeInstallerProfileV2, ForgeInstallerProfileV1_5, InstallerInfo}, mojang::MojangVersionFile};
+use crate::models::{
+    forge::{
+        DerivedForgeIndex, ForgeEntry, ForgeFile, ForgeInstallerProfile, ForgeInstallerProfileV1_5,
+        ForgeInstallerProfileV2, ForgeMCVersionInfo, ForgeVersion, InstallerInfo,
+    },
+    mojang::MojangVersionFile,
+};
 
 static FORGE_LEGACY_INFO: &str = include_str!("static_files/forge_legacyinfo.json");
 
@@ -88,19 +95,28 @@ impl ForgeUpdater {
         for (promo_key, short_version) in promos {
             let key_match = PROMOTED_KEY_REGEX.captures(promo_key);
             if key_match.is_none() {
-                info!("Skipping promo key {}, key was not in the right format", promo_key);
+                info!(
+                    "Skipping promo key {}, key was not in the right format",
+                    promo_key
+                );
                 continue;
             }
             let key_match = key_match.unwrap();
             if key_match.name("mc").is_none() {
-                info!("Skipping promo key {}, it has no Minecraft version", promo_key);
+                info!(
+                    "Skipping promo key {}, it has no Minecraft version",
+                    promo_key
+                );
                 continue;
             }
             if key_match.name("branch").is_some() {
                 info!("Skipping promo key {}, it has a branch", promo_key);
                 continue;
             } else if key_match.name("promotion").unwrap().as_str() == "recommended" {
-                info!("Adding recommendation for version {}", short_version.as_str().unwrap());
+                info!(
+                    "Adding recommendation for version {}",
+                    short_version.as_str().unwrap()
+                );
                 recommended.push(short_version.as_str().unwrap().to_string());
             } else if key_match.name("promotion").unwrap().as_str() == "latest" {
                 continue;
@@ -143,7 +159,10 @@ impl ForgeUpdater {
                         format!("Invalid metadata while processing version {} (MC version doesn't match)", mc_version),
                     ));
                 }
-                info!("Downloading manifest for MC version {}, Forge version {}", mc_version, long_version);
+                info!(
+                    "Downloading manifest for MC version {}, Forge version {}",
+                    mc_version, long_version
+                );
                 let files = self
                     .download_single_forge_file_manifest(long_version)
                     .await?;
@@ -218,18 +237,30 @@ impl ForgeUpdater {
         for (mc_version, mut info) in new_index.mc_versions.as_mut().unwrap() {
             let latest_version = info.versions.as_ref().unwrap().iter().last().unwrap();
             info.latest = Some(latest_version.clone());
-            new_index.versions.as_mut().unwrap().get_mut(latest_version).unwrap().latest = Some(true);
-            info!("Added {} as latest version for MC version {}", latest_version, mc_version);
+            new_index
+                .versions
+                .as_mut()
+                .unwrap()
+                .get_mut(latest_version)
+                .unwrap()
+                .latest = Some(true);
+            info!(
+                "Added {} as latest version for MC version {}",
+                latest_version, mc_version
+            );
         }
 
         info!("Dumping index files...");
-        let maven_file = std::fs::File::create(self.cache_directory.join("forge/maven-metadata.json"))?;
+        let maven_file =
+            std::fs::File::create(self.cache_directory.join("forge/maven-metadata.json"))?;
         serde_json::to_writer_pretty(maven_file, &remote_list)?;
 
-        let promotions_file = std::fs::File::create(self.cache_directory.join("forge/promotion_slim.json"))?;
+        let promotions_file =
+            std::fs::File::create(self.cache_directory.join("forge/promotion_slim.json"))?;
         serde_json::to_writer_pretty(promotions_file, &promotions_list)?;
 
-        let index_file = std::fs::File::create(self.cache_directory.join("forge/derived_index.json"))?;
+        let index_file =
+            std::fs::File::create(self.cache_directory.join("forge/derived_index.json"))?;
         serde_json::to_writer_pretty(index_file, &new_index)?;
 
         info!("Downloading installers and dumping profiles...");
@@ -240,12 +271,23 @@ impl ForgeUpdater {
                 continue;
             }
 
-            let jar_file_path = self.cache_directory.join(format!("forge/jars/{}", version.file_name().unwrap()));
+            let jar_file_path = self
+                .cache_directory
+                .join(format!("forge/jars/{}", version.file_name().unwrap()));
 
             if version.uses_installer() {
-                let installer_info_file_path = self.cache_directory.join(format!("forge/installer_info/{}.json", version.long_version));
-                let profile_file_path = self.cache_directory.join(format!("forge/installer_manifests/{}.json", version.long_version));
-                let version_json_file_path = self.cache_directory.join(format!("forge/version_manifests/{}.json", version.long_version));
+                let installer_info_file_path = self.cache_directory.join(format!(
+                    "forge/installer_info/{}.json",
+                    version.long_version
+                ));
+                let profile_file_path = self.cache_directory.join(format!(
+                    "forge/installer_manifests/{}.json",
+                    version.long_version
+                ));
+                let version_json_file_path = self.cache_directory.join(format!(
+                    "forge/version_manifests/{}.json",
+                    version.long_version
+                ));
 
                 let mut installer_refresh_required = false;
                 if !profile_file_path.is_file() {
@@ -257,91 +299,138 @@ impl ForgeUpdater {
 
                 if installer_refresh_required && !jar_file_path.is_file() {
                     info!("Downloading Forge version {}...", version.long_version);
-                    let version_installer = self.client
+                    let version_installer = self
+                        .client
                         .get(version.url().unwrap())
                         .send()
                         .await
                         .map_err(|e| {
                             std::io::Error::new(
                                 std::io::ErrorKind::Other,
-                                format!("Failed to download installer for version {}: {}", version.long_version, e),
+                                format!(
+                                    "Failed to download installer for version {}: {}",
+                                    version.long_version, e
+                                ),
                             )
                         })?;
                     if !version_installer.status().is_success() {
                         return Err(std::io::Error::new(
                             std::io::ErrorKind::Other,
-                            format!("Failed to download installer for version {}: {}", version.long_version, version_installer.status()),
+                            format!(
+                                "Failed to download installer for version {}: {}",
+                                version.long_version,
+                                version_installer.status()
+                            ),
                         ));
                     }
                     let mut installer_file = std::fs::File::create(&jar_file_path)?;
-                    let version_installer = version_installer
-                        .bytes()
-                        .await
-                        .map_err(|e| {
-                            std::io::Error::new(
-                                std::io::ErrorKind::Other,
-                                format!("Failed to download installer for version {}: {}", version.long_version, e),
-                            )
-                        })?;
+                    let version_installer = version_installer.bytes().await.map_err(|e| {
+                        std::io::Error::new(
+                            std::io::ErrorKind::Other,
+                            format!(
+                                "Failed to download installer for version {}: {}",
+                                version.long_version, e
+                            ),
+                        )
+                    })?;
                     installer_file.write_all(&version_installer)?;
                 }
 
-                info!("Processing installer for version {}...", version.long_version);
+                info!(
+                    "Processing installer for version {}...",
+                    version.long_version
+                );
                 if !profile_file_path.is_file() {
                     // read jar_file_path as zip
                     let mut zip = zip::ZipArchive::new(std::fs::File::open(&jar_file_path)?)?;
                     // read version info
                     if let Ok(version_json_entry) = zip.by_name("version.json") {
-                        let version_json_data: serde_json::Result<MojangVersionFile> = serde_json::from_reader(version_json_entry);
+                        let version_json_data: serde_json::Result<MojangVersionFile> =
+                            serde_json::from_reader(version_json_entry);
                         if version_json_data.is_err() {
-                            warn!("Failed to parse version.json for version {}", version.long_version);
+                            warn!(
+                                "Failed to parse version.json for version {}",
+                                version.long_version
+                            );
                         } else {
                             let version_json_data = version_json_data.unwrap();
-                            let mut version_json_file = std::fs::File::create(&version_json_file_path)?;
-                            serde_json::to_writer_pretty(&mut version_json_file, &version_json_data)?;
+                            let mut version_json_file =
+                                std::fs::File::create(&version_json_file_path)?;
+                            serde_json::to_writer_pretty(
+                                &mut version_json_file,
+                                &version_json_data,
+                            )?;
                         }
                     }
 
                     // read install profile
                     {
                         let mut install_profile_entry = zip.by_name("install_profile.json")?;
-                        
+
                         let mut install_profile_data_str = String::new();
                         install_profile_entry.read_to_string(&mut install_profile_data_str)?;
                         // check if data can be parsed to either ForgeInstallerProfile, ForgeInstallerProfileV2 or ForgeInstallerProfileV1_5
-                        let install_profile_data: serde_json::Result<ForgeInstallerProfile> = serde_json::from_str(&install_profile_data_str);
-                        let install_profile_data_v2: serde_json::Result<ForgeInstallerProfileV2> = serde_json::from_str(&install_profile_data_str);
-                        let install_profile_data_v1_5: serde_json::Result<ForgeInstallerProfileV1_5> = serde_json::from_str(&install_profile_data_str);
+                        let install_profile_data: serde_json::Result<ForgeInstallerProfile> =
+                            serde_json::from_str(&install_profile_data_str);
+                        let install_profile_data_v2: serde_json::Result<ForgeInstallerProfileV2> =
+                            serde_json::from_str(&install_profile_data_str);
+                        let install_profile_data_v1_5: serde_json::Result<
+                            ForgeInstallerProfileV1_5,
+                        > = serde_json::from_str(&install_profile_data_str);
 
                         if install_profile_data.is_ok() {
                             let install_profile_data = install_profile_data.unwrap();
-                            let mut install_profile_file = std::fs::File::create(&profile_file_path)?;
-                            serde_json::to_writer_pretty(&mut install_profile_file, &install_profile_data)?;
+                            let mut install_profile_file =
+                                std::fs::File::create(&profile_file_path)?;
+                            serde_json::to_writer_pretty(
+                                &mut install_profile_file,
+                                &install_profile_data,
+                            )?;
                         } else if install_profile_data_v2.is_ok() {
                             let install_profile_data_v2 = install_profile_data_v2.unwrap();
-                            let mut install_profile_file = std::fs::File::create(&profile_file_path)?;
-                            serde_json::to_writer_pretty(&mut install_profile_file, &install_profile_data_v2)?;
+                            let mut install_profile_file =
+                                std::fs::File::create(&profile_file_path)?;
+                            serde_json::to_writer_pretty(
+                                &mut install_profile_file,
+                                &install_profile_data_v2,
+                            )?;
                         } else if install_profile_data_v1_5.is_ok() {
                             let install_profile_data_v1_5 = install_profile_data_v1_5.unwrap();
-                            let mut install_profile_file = std::fs::File::create(&profile_file_path)?;
-                            serde_json::to_writer_pretty(&mut install_profile_file, &install_profile_data_v1_5)?;
+                            let mut install_profile_file =
+                                std::fs::File::create(&profile_file_path)?;
+                            serde_json::to_writer_pretty(
+                                &mut install_profile_file,
+                                &install_profile_data_v1_5,
+                            )?;
                         } else if version.is_supported() {
                             return Err(std::io::Error::new(
                                 std::io::ErrorKind::Other,
-                                format!("Failed to parse install_profile.json for version {}", version.long_version),
+                                format!(
+                                    "Failed to parse install_profile.json for version {}",
+                                    version.long_version
+                                ),
                             ));
                         } else {
-                            warn!("Failed to parse install_profile.json for version {}", version.long_version);
+                            warn!(
+                                "Failed to parse install_profile.json for version {}",
+                                version.long_version
+                            );
                         }
                     }
                 }
 
                 if !installer_info_file_path.is_file() {
                     // sha1 of the file at jar_file_path using ring
-                    let sha1_hash = ring::digest::digest(&ring::digest::SHA1_FOR_LEGACY_USE_ONLY, &std::fs::read(&jar_file_path)?);
+                    let sha1_hash = ring::digest::digest(
+                        &ring::digest::SHA1_FOR_LEGACY_USE_ONLY,
+                        &std::fs::read(&jar_file_path)?,
+                    );
                     let sha1 = data_encoding::HEXLOWER.encode(sha1_hash.as_ref());
                     // sha256 of the file at jar_file_path using ring
-                    let sha256_hash = ring::digest::digest(&ring::digest::SHA256, &std::fs::read(&jar_file_path)?);
+                    let sha256_hash = ring::digest::digest(
+                        &ring::digest::SHA256,
+                        &std::fs::read(&jar_file_path)?,
+                    );
                     let sha256 = data_encoding::HEXLOWER.encode(sha256_hash.as_ref());
                     // size of the file at jar_file_path
                     let size = std::fs::metadata(&jar_file_path)?.len();
@@ -357,8 +446,12 @@ impl ForgeUpdater {
         }
 
         // write static legacy info if it doesn't exist
-        if !PathBuf::new().join("static/forge-legacyinfo.json").is_file() {
-            let mut forge_legacyinfo_file = std::fs::File::create(&PathBuf::new().join("static/forge-legacyinfo.json"))?;
+        if !PathBuf::new()
+            .join("static/forge-legacyinfo.json")
+            .is_file()
+        {
+            let mut forge_legacyinfo_file =
+                std::fs::File::create(&PathBuf::new().join("static/forge-legacyinfo.json"))?;
             let _ = forge_legacyinfo_file.write(FORGE_LEGACY_INFO.as_bytes())?;
         }
 
@@ -395,7 +488,14 @@ impl ForgeUpdater {
         }
 
         let mut file_map: HashMap<String, ForgeFile> = HashMap::new();
-        for (classifier, extension_obj) in files_json.as_object().unwrap().get("classifiers").unwrap().as_object().unwrap() {
+        for (classifier, extension_obj) in files_json
+            .as_object()
+            .unwrap()
+            .get("classifiers")
+            .unwrap()
+            .as_object()
+            .unwrap()
+        {
             let extension_obj = extension_obj.as_object().expect("a json object");
             let mut index = 0;
             let mut inserted = false;

@@ -1,10 +1,15 @@
-# Morphosis
+# metamorphosis
 
-Morphosis is a work-in-progress set of tools to deal with Minecraft metadata, mainly for use with PolyMC.
+API client for multiple, Minecraft-related metadata services.
 
-It consists of a library (metamorphosis) and a binary (polymorphosis).
+Metamorphosis defines `Serialize` and `Deserialize` on every model class in order to support both reading and writing metadata.
 
-* Metamorphosis is an API client for various Minecraft metadata services.
-* Polymorphosis is a meta file generator for PolyMC, which uses metamorphosis in order to generate meta files which can be read by PolyMC.
+## What metadata can metamorphosis handle?
 
-Metamorphosis is licensed under the LGPL-3.0, while Polymorphosis is licensed under the GPL-3.0-only.
+So far, the following metadata services are implemented:
+
+- Mojang
+- Forge
+- Fabric
+- Liteloader
+- PolyMC
